@@ -1,0 +1,12 @@
+# Ignore the virtual environment directory
+venv/
+.env
+*.env
+
+# IntelliJ IDEA specific files
+.idea/
+*.iml
+
+# Python specific files
+__pycache__/
+*.pyc
