@@ -8,7 +8,17 @@ from langchain.prompts import ChatPromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 import requests
 from bs4 import BeautifulSoup
-from langchain.schema.runnable import RunnablePassthrough
+from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
+from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
+
+RESULTS_PER_QUESTION = 3
+
+ddg_search = DuckDuckGoSearchAPIWrapper()
+
+# Web search function
+def web_search(query: str, num_results: int = RESULTS_PER_QUESTION):
+    results = ddg_search.results(query, num_results)
+    return [r["link"] for r in results]
 
 # Template for summarization
 SUMMARY_TEMPLATE = """{text}
@@ -42,18 +52,21 @@ url = "https://blog.langchain.dev/announcing-langsmith/"
 
 chat_openai = ChatOpenAI(model="gpt-3.5-turbo-0125", openai_api_key=openai_api_key)
 
-chain = RunnablePassthrough.assign(
+scrape_and_summarize_chain = RunnablePassthrough.assign(
     text=lambda x: scrape_text(x["url"])[:10000]
 ) | SUMMARY_PROMPT | chat_openai | StrOutputParser()
 
 print("Chain created successfully")
 
+chain = RunnablePassthrough.assign(
+    urls = lambda x: web_search(x["question"])
+) | (lambda x: [{"question": x["question"], "url": u} for u in x["urls"]]) | scrape_and_summarize_chain.map()
+
 # Invoke the chain and print the result
 try:
     result = chain.invoke(
         {
-            "question": "What is LangSmith?",
-            "url": url
+            "question": "What is LangSmith?"
         }
     )
     print(f"Output: {result}")
