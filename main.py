@@ -54,8 +54,10 @@ url = "https://blog.langchain.dev/announcing-langsmith/"
 chat_openai = ChatOpenAI(model="gpt-3.5-turbo-0125", openai_api_key=openai_api_key)
 
 scrape_and_summarize_chain = RunnablePassthrough.assign(
+    summary= RunnablePassthrough.assign(
     text=lambda x: scrape_text(x["url"])[:10000]
 ) | SUMMARY_PROMPT | chat_openai | StrOutputParser()
+) | (lambda x: f"URL: {x['url']}\n\nSUMMARY: {x['summary']}")
 
 print("Chain created successfully")
 
