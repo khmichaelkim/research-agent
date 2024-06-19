@@ -11,6 +11,8 @@ from bs4 import BeautifulSoup
 from langchain.schema.runnable import RunnablePassthrough, RunnableLambda
 from langchain_community.utilities import DuckDuckGoSearchAPIWrapper
 import json
+from fastapi import FastAPI
+from langserve import add_routes
 
 RESULTS_PER_QUESTION = 3
 
@@ -118,14 +120,20 @@ chain = RunnablePassthrough.assign(
     research_summary=full_research_chain | collapse_list_of_lists
 ) | prompt | ChatOpenAI(model="gpt-3.5-turbo-0125") | StrOutputParser()
 
+app = FastAPI(
+    title="LangChain Server",
+    version="1.0",
+    description="A simple api server using Langchain's Runnable interfaces",
+)
 
-# Invoke the chain and print the result
-try:
-    result = chain.invoke(
-        {
-            "question": "what is the difference between langsmith and langchain?"
-        }
-    )
-    print(f"Output: {result}")
-except Exception as e:
-    print(f"Error invoking chain: {e}")
+add_routes(
+    app,
+    chain,
+    path="/research-agent",
+)
+
+if __name__ == "__main__":
+    import uvicorn
+
+    uvicorn.run(app, host="localhost", port=8000)
+
