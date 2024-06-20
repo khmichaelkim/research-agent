@@ -50,7 +50,7 @@ def scrape_text(url: str):
         print(e)
         return f"Failed to retrieve the webpage: {e}"
 
-url = "https://blog.langchain.dev/announcing-langsmith/"
+# url = "https://blog.langchain.dev/announcing-langsmith/"
 
 
 chat_openai = ChatOpenAI(model="gpt-3.5-turbo-0125", openai_api_key=openai_api_key)
